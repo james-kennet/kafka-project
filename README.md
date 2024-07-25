@@ -53,7 +53,7 @@
 - Checkout the project in Github.
 - Go the project directory.
 ```bash
-cd /<path>/kafka-springboot/kafka-project
+cd /<path>/kafka-project
 ```
 - Install kafka-project services.
 ```bash
@@ -88,3 +88,9 @@ cd <JMeter bin>
 - ![My Image](./_external_files/kafka-overview2.jpg)
 - ![My Image](./_external_files/kafka-overview3.jpg)
 - ![My Image](./_external_files/kafka-overview4.jpg)
+
+### View the address records.
+- Setup MySQL client.
+- ![My Image](./_external_files/mysql1.jpg)
+- Verify the data.
+- ![My Image](./_external_files/mysql2.jpg)
