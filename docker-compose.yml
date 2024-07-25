@@ -1,0 +1,109 @@
+services:
+
+  mysql-db:
+    image: mysql
+    networks:
+      - kafka-network
+    env_file: ./.env
+    environment:
+      - MYSQL_DATABASE=$MYSQLDB_DATABASE
+      - MYSQL_ROOT_PASSWORD=$MYSQLDB_ROOT_PASSWORD
+      - MYSQL_USER=$MYSQLDB_USER
+      - MYSQL_PASSWORD=$MYSQLDB_PASSWORD
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./_external_files/mysql-scripts.sql:/docker-entrypoint-initdb.d/mysql-scripts.sql
+
+  zookeeper1:
+    image: confluentinc/cp-zookeeper:latest
+    networks:
+      - kafka-network
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "22181:2181"
+
+  kafka1:
+    image: confluentinc/cp-kafka:latest
+    networks:
+      - kafka-network
+    depends_on:
+      - zookeeper1
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper1:2181
+#      KAFKA_LISTENERS: INTERNAL_HOST://kafka1:9092,EXTERNAL_HOST://localhost:29092 -> further explore
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL_HOST://kafka1:9092,EXTERNAL_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL_HOST:PLAINTEXT,EXTERNAL_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL_HOST
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  kafkadrop1:
+    image: obsidiandynamics/kafdrop:latest
+    networks:
+      - kafka-network
+    depends_on:
+      - mysql-db
+      - kafka1
+    ports:
+      - "9000:9000"
+    environment:
+      KAFKA_BROKERCONNECT: kafka1:9092
+
+  kafka-producer:
+    image: producer-app
+    networks:
+      - kafka-network
+    depends_on:
+      - kafka1
+      - zookeeper1
+      - kafkadrop1
+    build:
+      context: .
+      dockerfile: ./kafka-producer/Dockerfile
+    command: sh -c "/wait && java -jar producer-app.jar"
+    ports:
+      - "8092:8092"
+
+  kafka-consumer:
+    image: consumer-app
+    networks:
+      - kafka-network
+    depends_on:
+      - kafka1
+      - kafkadrop1
+    build:
+      context: .
+      dockerfile: ./kafka-consumer/Dockerfile
+    command: sh -c "/wait && java -jar consumer-app.jar"
+    ports:
+      - "8091:8091"
+
+  address-service:
+    image: address-app
+    networks:
+      - kafka-network
+    depends_on:
+      - mysql-db
+      - kafka-consumer
+      - kafka-producer
+    build:
+      context: .
+      dockerfile: ./address-service/Dockerfile
+    command: sh -c "/wait && java -jar address-app.jar"
+    environment:
+      - WAIT_HOSTS=mysql-db:3306
+      - WAIT_HOSTS_TIMEOUT=300
+      - WAIT_SLEEP_INTERVAL=10
+      - WAIT_HOST_CONNECT_TIMEOUT=30
+    ports:
+      - "8093:8093"
+
+networks:
+  kafka-network:
+    driver: bridge
