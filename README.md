@@ -1,15 +1,18 @@
 # Spring Boot, Kafka, Zookeeper, Kafdrop, Spring Data/JPA, MySQL, Rest API
 ## Sample kafka-project
-- Kafka as a traditional message broker. One topic per platform.
-- Single topic for all platforms but with different clientType. To be processed separately using recordFilterStrategy.
+- Single topic <b>per individual platform</b>.
+  - Kafka as a traditional message broker.
+- Single topic <b>to all platforms</b>.
+  - Different clientType value attribute. To be processed separately using recordFilterStrategy.
 
 ### Use Cases(Address creation)
-* In the insurance domain, multiple platforms are able to update customer information, like addresses:
+* Improve the speed of synchronizing customer information in a typical Insurance domain.
+* In the Insurance domain, multiple platforms are able to update customer information, like addresses:
   * Website application
   * Salesforce
   * Life400 - mainframe
-* Use kafka to receive and process all ADDRESS creation from multiple platforms and process to the downstream services.
-* Introduced address_transaction which will be refer by the consumers
+* Use Kafka to receive and process all ADDRESS creation from multiple platforms and process to the downstream services.
+* Introduced <b>address_transaction table</b> which will be referred by the consumers.
 
 ### Use Case #1
 * Kafka as traditional message broker.
@@ -19,23 +22,23 @@
     * ADDRESS_CREATE_LIFE400
   * One producer endpoint per platform/topic.
   * One consumer listener per platform/topic.
-* Sample architecture diagram
-  ![My Image](./_external_files/kafka-demo-Sample1-NormalQueue.jpg)
+#### Sample High-level architecture diagram
+  ![My Image](./_external_files/kafka-demo-Sample1-NormalQueue.png)
 
 ### Use Case #2
 * Kafka single topic with consumer using recordFilterStrategy.
   * One topic for all platforms with different clientType.
     * ADDRESS_CREATE_ALL_PLATFORM
-  * One producer endpoint to all platform.
+  * One producer endpoint to all platforms.
   * One consumer listener per platform clientType by using recordFilterStrategy.
     * containerFactory = "allPlatformSalesforceFactory"
     * containerFactory = "allPlatformWebsiteFactory"
     * containerFactory = "allPlatformLife400Factory"
-* Sample architecture diagram
-* ![My Image](./_external_files/kafka-demo-Sample2-Filter.jpg)
+#### Sample High-level architecture diagram
+* ![My Image](./_external_files/kafka-demo-Sample2-Filter.png)
 
 
-### Prerequisite on running this project:
+### Prerequisites on running this project:
 - Install Java 11(Needed by Kafkdrop - kafka message viewer).
 - Install Docker Desktop.
 - JMeter - for testing.
